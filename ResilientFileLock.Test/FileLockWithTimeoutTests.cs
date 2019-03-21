@@ -120,18 +120,16 @@ namespace ResilientFileLock.Test
 
         public static async Task<bool> AcquireLockAndReleaseAfterDelay(FileInfo file, TimeSpan lockSpan, TimeSpan delaySpan)
         {
-            ILock fileLock = new FileLock(file);
-            if (!await fileLock.TryAcquire(lockSpan))
+            using (var fileLock = new FileLock(file))
             {
-                return false;
-            }
+                if (!await fileLock.TryAcquire(lockSpan))
+                {
+                    return false;
+                }
 
-            using (fileLock)
-            {
                 await Task.Delay(delaySpan);
+                return true;
             }
-
-            return true;
         }
     }
 }
