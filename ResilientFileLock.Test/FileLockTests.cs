@@ -44,6 +44,26 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
+        public async void BasicLock()
+        {
+            using (var testPath = new TestPath())
+            using(var fileLock = new FileLock(testPath.TempFile))
+            {
+                var lockFilename = Path.ChangeExtension(testPath.TempFile.FullName, Extension);
+
+                await fileLock.TryAcquire(TimeSpan.FromHours(1));
+                Assert.True(File.Exists(lockFilename));
+
+                var lockContentLines = File.ReadAllLines(lockFilename);
+                Assert.True(Guid.TryParse(lockContentLines[0], out _));
+                Assert.True(long.TryParse(lockContentLines[1], out var ticks));
+
+                var fileDate = new DateTime(ticks);
+                Assert.True(fileDate - DateTime.UtcNow - TimeSpan.FromHours(1) < _timeVariable);
+            }
+        }
+
+        [Fact]
         public async void DisposeTest()
         {
             using (var testPath = new TestPath())
