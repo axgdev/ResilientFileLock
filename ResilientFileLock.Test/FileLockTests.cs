@@ -158,7 +158,7 @@ namespace ResilientFileLock.Test
             {
                 var lockContentLines = File.ReadAllLines(lockFilename);
                 Assert.True(Guid.TryParse(lockContentLines[0], out _));
-                Assert.True(long.TryParse(lockContentLines[1], out var ticks));
+                Assert.True(long.TryParse(lockContentLines[1], out _));
             });
         }
 

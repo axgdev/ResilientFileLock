@@ -8,7 +8,7 @@ namespace ResilientFileLock
     /// <summary>
     ///     From answer to StackOverflow question:
     ///     http://stackoverflow.com/questions/28305968/use-task-run-in-synchronous-method-to-avoid-deadlock-waiting-on-async-method/28307965#28307965
-    ///     From pastebin: https://pastebin.com/feHtWPwX
+    ///     From PasteBin: https://pastebin.com/feHtWPwX
     /// </summary>
     public class NoSynchronizationContextScope : IDisposable
     {
