@@ -15,8 +15,8 @@ namespace ResilientFileLock
         private static readonly TimeSpan DefaultDisposalTimeout = TimeSpan.FromSeconds(30);
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly LockModel _content;
-        private readonly string _path;
         private readonly TimeSpan _disposalTimeout;
+        private readonly string _path;
         private bool _disposed;
         private TimeSpan _retrySpan = TimeSpan.MinValue;
         private TimeSpan _timeout = TimeSpan.MinValue;
@@ -27,7 +27,8 @@ namespace ResilientFileLock
         /// </summary>
         /// <param name="fileToLock">File we want lock</param>
         /// <param name="disposalTimeout">Maximum amount of time allowed to dispose object</param>
-        public FileLock(FileSystemInfo fileToLock, TimeSpan? disposalTimeout = null) : this(fileToLock.FullName, disposalTimeout)
+        public FileLock(FileSystemInfo fileToLock, TimeSpan? disposalTimeout = null) :
+            this(fileToLock.FullName, disposalTimeout)
         {
         }
 
@@ -179,6 +180,7 @@ namespace ResilientFileLock
                 {
                     _cancellationTokenSource?.Cancel();
                 }
+
                 action?.Invoke();
             });
         }
