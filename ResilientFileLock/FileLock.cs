@@ -170,14 +170,15 @@ namespace ResilientFileLock
 
         private void ContinuousRefreshTask(TimeSpan lockTime)
         {
+            var cancellationToken = _cancellationTokenSource.Token;
             Task.Run(async () =>
             {
-                while (!_cancellationTokenSource.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     await AddTime(lockTime);
-                    await Task.Delay(lockTime);
+                    await Task.Delay(lockTime, cancellationToken);
                 }
-            }, _cancellationTokenSource.Token);
+            }, cancellationToken);
         }
 
         /// <summary>
