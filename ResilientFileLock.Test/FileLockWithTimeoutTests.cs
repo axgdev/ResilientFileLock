@@ -6,7 +6,6 @@ using Xunit;
 
 namespace ResilientFileLock.Test
 {
-    [Collection(nameof(FileLockCollection))]
     public class AcquireBeforeReleased
     {
         [Theory]
@@ -17,10 +16,10 @@ namespace ResilientFileLock.Test
         [InlineData(150)]
         public async void TryToAcquireLockBeforeItIsReleased(int lockMilliseconds)
         {
-            var file = new FileInfo(FileLockTestPath.GetTempFileName());
             var lockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
-            using (var firstLock = new FileLock(file))
-            using (var secondLock = new FileLock(file))
+            using (var testPath = new TestPath())
+            using (var firstLock = new FileLock(testPath.TempFile))
+            using (var secondLock = new FileLock(testPath.TempFile))
             {
                 var firstAcquireTask = firstLock.TryAcquire(lockSpan);
                 var secondAcquireTask = await secondLock
@@ -32,7 +31,6 @@ namespace ResilientFileLock.Test
         }
     }
 
-    [Collection(nameof(FileLockCollection))]
     public class AcquireAfterReleased
     {
         [Theory]
@@ -45,19 +43,18 @@ namespace ResilientFileLock.Test
         {
             var lockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
             var timeout = TimeSpan.FromMilliseconds(lockMilliseconds * 10);
-            var file = new FileInfo(FileLockTestPath.GetTempFileName());
-            var firstAcquireTask = await Helpers.AcquireLockAndReleaseAfterDelay(file, Helpers.OneMillisecond);
-            using (var secondLock = new FileLock(file))
+            
+            using (var testPath = new TestPath())
+            using (var secondLock = new FileLock(testPath.TempFile))
             {
+                var firstAcquireTask = await Helpers.AcquireLockAndReleaseAfterDelay(testPath.TempFile, Helpers.OneMillisecond);
                 var secondFileLock = await secondLock.WithTimeout(timeout, Helpers.MinimumRetry).TryAcquire(lockSpan);
                 Assert.True(secondFileLock);
+                Assert.True(firstAcquireTask);
             }
-
-            Assert.True(firstAcquireTask);
         }
     }
 
-    [Collection(nameof(FileLockCollection))]
     public class AcquireLockBeforeOfficialRelease
     {
         //Minimum time is 15ms. So the lockMilliseconds (x) should be x > 60ms, because if x/4 >= 15ms there is time
@@ -74,22 +71,20 @@ namespace ResilientFileLock.Test
             var spanToRelease = TimeSpan.FromMilliseconds(delayMilliseconds);
             var lockSpan = TimeSpan.FromMilliseconds(delayMilliseconds * 2);
             var timeoutSpan = TimeSpan.FromMilliseconds(delayMilliseconds * 4);
-            var file = new FileInfo(FileLockTestPath.GetTempFileName());
 
-            var firstAcquireTask = Helpers.AcquireLockAndReleaseAfterDelay(file, lockSpan, spanToRelease);
-            using (var secondLock = new FileLock(file))
+            using (var testPath = new TestPath())
+            using (var secondLock = new FileLock(testPath.TempFile))
             {
+                var firstAcquireTask = Helpers.AcquireLockAndReleaseAfterDelay(testPath.TempFile, lockSpan, spanToRelease);
                 var secondAcquireTask = secondLock
                     .WithTimeout(timeoutSpan, Helpers.MinimumRetry)
                     .TryAcquire(lockSpan);
                 Assert.True(await secondAcquireTask);
+                Assert.True(await firstAcquireTask);
             }
-
-            Assert.True(await firstAcquireTask);
         }
     }
 
-    [Collection(nameof(FileLockCollection))]
     public class ShouldGetOutBeforeLockTime
     {
         [Theory]
@@ -102,9 +97,8 @@ namespace ResilientFileLock.Test
         {
             var lockSpan = TimeSpan.FromSeconds(lockSeconds);
             var retrySpan = TimeSpan.FromSeconds(lockSeconds / 2.0);
-            var file = new FileInfo(FileLockTestPath.GetTempFileName());
-            var fileLock = new FileLock(file);
-            using (fileLock)
+            using (var testPath = new TestPath())
+            using (var fileLock = new FileLock(testPath.TempFile))
             {
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
