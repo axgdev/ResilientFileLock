@@ -43,24 +43,71 @@ namespace ResilientFileLock.Test
             }
         }
 
-        [Fact]
-        public async Task BasicLock()
+        private static async Task AfterLockModelArrange(Action<FileLock, string, TimeSpan> actAssert)
+        {
+            await AfterLockModelArrangeAsync((fileLock, lockFilename, lockTime) =>
+            {
+                actAssert(fileLock, lockFilename, lockTime);
+                return Task.CompletedTask;
+            });
+        }
+
+        private static async Task AfterLockModelArrangeAsync(Func<FileLock, string, TimeSpan, Task> actAssert)
         {
             using (var testPath = new TestPath())
-            using(var fileLock = new FileLock(testPath.TempFile))
+            using (var fileLock = new FileLock(testPath.TempFile))
             {
-                var lockFilename = Path.ChangeExtension(testPath.TempFile.FullName, Extension);
+                var lockFileName = Path.ChangeExtension(testPath.TempFile.FullName, Extension);
+                var lockTime = TimeSpan.FromHours(1);
+                await fileLock.TryAcquire(lockTime);
+                await actAssert(fileLock, lockFileName, lockTime);
+            }
+        }
 
-                await fileLock.TryAcquire(TimeSpan.FromHours(1));
+        [Fact]
+        public async Task LockModelIsCreated()
+        {
+            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
+            {
                 Assert.True(File.Exists(lockFilename));
+            });
+        }
 
+        [Fact]
+        public async Task LockModelIsCorrect()
+        {
+            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
+            {
                 var lockContentLines = File.ReadAllLines(lockFilename);
                 Assert.True(Guid.TryParse(lockContentLines[0], out _));
                 Assert.True(long.TryParse(lockContentLines[1], out var ticks));
+            });
+        }
 
+        [Fact]
+        public async Task BasicLock()
+        {
+            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
+            {
+                var lockContentLines = File.ReadAllLines(lockFilename);
+                var ticks = long.Parse(lockContentLines[1]);
                 var fileDate = new DateTime(ticks);
-                Assert.True(fileDate - DateTime.UtcNow - TimeSpan.FromHours(1) < _timeVariable);
-            }
+                Assert.True(fileDate - DateTime.UtcNow - lockTime < _timeVariable);
+            });
+        }
+
+
+        [Fact]
+        public async Task BasicLockAddTime()
+        {
+            await AfterLockModelArrangeAsync(async (fileLock, lockFilename, lockTime) =>
+            {
+                await fileLock.AddTime(lockTime);
+                var lockContentLines = File.ReadAllLines(lockFilename);
+                var ticks = long.Parse(lockContentLines[1]);
+                var fileDate = new DateTime(ticks);
+                Assert.True(fileDate - DateTime.UtcNow - lockTime - lockTime < _timeVariable);
+            });
         }
 
         [Fact]
