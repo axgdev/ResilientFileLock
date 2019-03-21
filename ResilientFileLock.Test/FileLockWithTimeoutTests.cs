@@ -9,14 +9,14 @@ namespace ResilientFileLock.Test
     public class AcquireBeforeReleased
     {
         [Theory]
-        [InlineData(30)]
-        [InlineData(50)]
-        [InlineData(70)]
-        [InlineData(100)]
-        [InlineData(150)]
-        public async void TryToAcquireLockBeforeItIsReleased(int lockMilliseconds)
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        [InlineData(5)]
+        public async void TryToAcquireLockBeforeItIsReleased(int lockSeconds)
         {
-            var lockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
+            var lockSpan = TimeSpan.FromSeconds(lockSeconds);
             using (var testPath = new TestPath())
             using (var firstLock = new FileLock(testPath.TempFile))
             using (var secondLock = new FileLock(testPath.TempFile))
@@ -57,15 +57,12 @@ namespace ResilientFileLock.Test
 
     public class AcquireLockBeforeOfficialRelease
     {
-        //Minimum time is 15ms. So the lockMilliseconds (x) should be x > 60ms, because if x/4 >= 15ms there is time
-        //to try at least a second time without timing out, because of the timeout in this test set to x - 15ms
-        //Besides x % 4 == 0, to make it divisible between 4.
         [Theory]
-        [InlineData(64)]
-        [InlineData(68)]
-        [InlineData(72)]
-        [InlineData(76)]
-        [InlineData(80)]
+        [InlineData(10)]
+        [InlineData(20)]
+        [InlineData(30)]
+        [InlineData(40)]
+        [InlineData(50)]
         public async void TryToAcquireLockBeforeOfficialRelease(int delayMilliseconds)
         {
             var spanToRelease = TimeSpan.FromMilliseconds(delayMilliseconds);
