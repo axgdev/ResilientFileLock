@@ -115,9 +115,7 @@ namespace ResilientFileLock
                 return await TryAcquireWithoutTimeout(lockTime, refreshContinuously, cancellationToken);
             }
 
-            var timeoutTokenSource = new CancellationTokenSource(_timeout);
-            var timeoutToken = timeoutTokenSource.Token;
-            RegisterCancellationToken(timeoutToken);
+            RegisterFileLockTimeout(_timeout);
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
                 var isLockAcquired = await TryAcquireWithoutTimeout(lockTime, refreshContinuously, cancellationToken);
@@ -161,7 +159,14 @@ namespace ResilientFileLock
             return true;
         }
 
-        private void RegisterCancellationToken(CancellationToken cancellationToken)
+        private void RegisterFileLockTimeout(TimeSpan timeoutSpan)
+        {
+            var cancellationTokenSource = new CancellationTokenSource(timeoutSpan);
+            var timeoutToken = cancellationTokenSource.Token;
+            RegisterCancellationToken(timeoutToken, () => cancellationTokenSource.Dispose());
+        }
+
+        private void RegisterCancellationToken(CancellationToken cancellationToken, Action action = null)
         {
             cancellationToken.Register(() =>
             {
@@ -169,6 +174,7 @@ namespace ResilientFileLock
                 {
                     _cancellationTokenSource?.Cancel();
                 }
+                action?.Invoke();
             });
         }
 
