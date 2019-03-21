@@ -51,6 +51,12 @@ namespace ResilientFileLock
             return lockFile.ReleaseDate;
         }
 
+        internal async Task<bool> CanModify(string path = "")
+        {
+            var lockFile = await TryGetLockFile(path);
+            return lockFile.ReleaseDate <= DateTime.UtcNow || _identifier == lockFile.Identifier;
+        }
+
         private async Task<Guid> GetIdentifier(string path = "")
         {
             var lockFile = await TryGetLockFile(path);

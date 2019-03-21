@@ -58,8 +58,6 @@ namespace ResilientFileLock
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
             _disposed = true;
-            //190319: Task.Run, runs without synchronization context on the ThreadPool, and wait to make it synchronous
-            //Task.Run(ReleaseLock).Wait(DisposeTimeout);
             NoSynchronizationContextScope.RunSynchronously(ReleaseLock);
         }
 
@@ -92,6 +90,20 @@ namespace ResilientFileLock
             bool refreshContinuously = false,
             CancellationToken cancellationToken = default(CancellationToken))
         {
+            try
+            {
+                return await TryAcquireLock(lockTime, refreshContinuously, cancellationToken);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> TryAcquireLock(TimeSpan lockTime,
+            bool refreshContinuously = false,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
             if (_disposed)
             {
                 throw new ObjectDisposedException(nameof(FileLock));
@@ -104,7 +116,7 @@ namespace ResilientFileLock
 
             var timeoutTokenSource = new CancellationTokenSource(_timeout);
             var timeoutToken = timeoutTokenSource.Token;
-            timeoutToken.Register(() => _cancellationTokenSource?.Cancel());
+            RegisterCancellationToken(timeoutToken);
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
                 var isLockAcquired = await TryAcquireWithoutTimeout(lockTime, refreshContinuously, cancellationToken);
@@ -120,19 +132,18 @@ namespace ResilientFileLock
             bool refreshContinuously = false,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-            cancellationToken.Register(() => _cancellationTokenSource?.Cancel());
+            RegisterCancellationToken(cancellationToken);
             if (lockTime <= TimeSpan.Zero || _cancellationTokenSource.IsCancellationRequested)
             {
                 return false;
             }
 
-            var utcReleaseDate = DateTime.UtcNow + lockTime;
-
-            if (File.Exists(_path) && (!await IsLockExpired() || !await IsLockOwned()))
+            if (File.Exists(_path) && !await _content.CanModify())
             {
                 return false;
             }
 
+            var utcReleaseDate = DateTime.UtcNow + lockTime;
             if (!await _content.TrySetReleaseDate(utcReleaseDate))
             {
                 return false;
@@ -146,14 +157,15 @@ namespace ResilientFileLock
             return true;
         }
 
-        private async Task<bool> IsLockExpired()
+        private void RegisterCancellationToken(CancellationToken cancellationToken)
         {
-            return await _content.GetReleaseDate() <= DateTime.UtcNow;
-        }
-
-        private Task<bool> IsLockOwned()
-        {
-            return _content.IsInstanceOwned();
+            cancellationToken.Register(() =>
+            {
+                if (!_disposed)
+                {
+                    _cancellationTokenSource?.Cancel();
+                }
+            });
         }
 
         private void ContinuousRefreshTask(TimeSpan lockTime)
@@ -189,7 +201,7 @@ namespace ResilientFileLock
 
         private async Task<bool> IsLockInstanceOwned()
         {
-            return File.Exists(_path) && await IsLockOwned();
+            return File.Exists(_path) && await _content.IsInstanceOwned();
         }
 
         private static string GetLockFileName(string path)

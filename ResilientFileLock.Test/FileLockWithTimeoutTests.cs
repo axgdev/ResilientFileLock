@@ -18,18 +18,17 @@ namespace ResilientFileLock.Test
         public async void TryToAcquireLockBeforeItIsReleased(int lockMilliseconds)
         {
             var file = new FileInfo(FileLockTestPath.GetTempFileName());
-            var firstLockSpan = TimeSpan.FromSeconds(10);
-            var secondLockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
-            var firstAcquireTask = Helpers.AcquireLockAndReleaseAfterDelay(file, firstLockSpan);
+            var lockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
+            using (var firstLock = new FileLock(file))
             using (var secondLock = new FileLock(file))
             {
-                var secondFileLock = await secondLock
+                var firstAcquireTask = firstLock.TryAcquire(lockSpan);
+                var secondAcquireTask = await secondLock
                     .WithTimeout(Helpers.MinimumTimeout, Helpers.MinimumRetry)
-                    .TryAcquire(secondLockSpan);
-                Assert.False(secondFileLock);
+                    .TryAcquire(lockSpan);
+                Assert.False(secondAcquireTask);
+                Assert.True(await firstAcquireTask);
             }
-
-            Assert.True(await firstAcquireTask);
         }
     }
 
@@ -70,22 +69,20 @@ namespace ResilientFileLock.Test
         [InlineData(72)]
         [InlineData(76)]
         [InlineData(80)]
-        public async void TryToAcquireLockBeforeOfficialRelease(int lockMilliseconds)
+        public async void TryToAcquireLockBeforeOfficialRelease(int delayMilliseconds)
         {
-            var spanToRelease = TimeSpan.FromMilliseconds(lockMilliseconds / 4.0);
-            var lockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
-            var timeoutSpan = lockSpan;
-            var maximumSpanToWait = lockSpan - Helpers.MinimumTimeout;
+            var spanToRelease = TimeSpan.FromMilliseconds(delayMilliseconds);
+            var lockSpan = TimeSpan.FromMilliseconds(delayMilliseconds * 2);
+            var timeoutSpan = TimeSpan.FromMilliseconds(delayMilliseconds * 4);
             var file = new FileInfo(FileLockTestPath.GetTempFileName());
 
-
-            var firstAcquireTask = Helpers.AcquireLockAndReleaseAfterDelay(file, spanToRelease);
+            var firstAcquireTask = Helpers.AcquireLockAndReleaseAfterDelay(file, lockSpan, spanToRelease);
             using (var secondLock = new FileLock(file))
             {
-                var secondFileLock = secondLock
+                var secondAcquireTask = secondLock
                     .WithTimeout(timeoutSpan, Helpers.MinimumRetry)
                     .TryAcquire(lockSpan);
-                Assert.True(await Task.WhenAny(secondFileLock, Task.Delay(maximumSpanToWait)) == secondFileLock);
+                Assert.True(await secondAcquireTask);
             }
 
             Assert.True(await firstAcquireTask);
@@ -124,7 +121,13 @@ namespace ResilientFileLock.Test
         public static readonly TimeSpan MinimumRetry = TimeSpan.FromMilliseconds(1);
         public static readonly TimeSpan OneMillisecond = TimeSpan.FromMilliseconds(1);
 
-        public static async Task<bool> AcquireLockAndReleaseAfterDelay(FileInfo file, TimeSpan lockSpan)
+        public static Task<bool> AcquireLockAndReleaseAfterDelay(FileInfo file, TimeSpan lockSpan)
+        {
+            return AcquireLockAndReleaseAfterDelay(file, lockSpan, lockSpan);
+        }
+
+
+        public static async Task<bool> AcquireLockAndReleaseAfterDelay(FileInfo file, TimeSpan lockSpan, TimeSpan delaySpan)
         {
             ILock fileLock = new FileLock(file);
             if (!await fileLock.TryAcquire(lockSpan))
@@ -134,7 +137,7 @@ namespace ResilientFileLock.Test
 
             using (fileLock)
             {
-                await Task.Delay(lockSpan);
+                await Task.Delay(delaySpan);
             }
 
             return true;
