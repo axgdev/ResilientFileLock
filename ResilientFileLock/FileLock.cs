@@ -12,13 +12,13 @@ namespace ResilientFileLock
     public class FileLock : ILock
     {
         private const string Extension = "lock";
-        private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(30);
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly LockModel _content;
         private readonly string _path;
         private bool _disposed;
         private TimeSpan _retrySpan = TimeSpan.MinValue;
         private TimeSpan _timeout = TimeSpan.MinValue;
+        private TimeSpan _disposalTimeout = TimeSpan.FromSeconds(30);
 
         /// <inheritdoc />
         /// <summary>
@@ -61,12 +61,6 @@ namespace ResilientFileLock
             NoSynchronizationContextScope.RunSynchronously(ReleaseLock);
         }
 
-        /// <inheritdoc />
-        public async Task AddTime(TimeSpan lockTime)
-        {
-            await _content.TrySetReleaseDate(await _content.GetReleaseDate() + lockTime);
-        }
-
         public FileLock WithTimeout(TimeSpan timeoutSpan, TimeSpan retrySpan)
         {
             if (retrySpan >= timeoutSpan)
@@ -78,6 +72,18 @@ namespace ResilientFileLock
             _timeout = timeoutSpan;
             _retrySpan = retrySpan;
             return this;
+        }
+
+        public FileLock WithDisposalTimeout(TimeSpan disposalTimeout)
+        {
+            _disposalTimeout = disposalTimeout;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public async Task AddTime(TimeSpan lockTime)
+        {
+            await _content.TrySetReleaseDate(await _content.GetReleaseDate() + lockTime);
         }
 
         /// <inheritdoc />
@@ -214,7 +220,7 @@ namespace ResilientFileLock
         {
             try
             {
-                return !await IsLockInstanceOwned().TimeoutAfter(DisposeTimeout);
+                return !await IsLockInstanceOwned().TimeoutAfter(_disposalTimeout);
             }
             catch (TimeoutException)
             {
