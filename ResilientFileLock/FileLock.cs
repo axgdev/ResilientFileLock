@@ -12,7 +12,7 @@ namespace ResilientFileLock
     public class FileLock : ILock
     {
         private const string Extension = "lock";
-        private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(30);
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly LockModel _content;
         private readonly string _path;
