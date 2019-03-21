@@ -196,17 +196,29 @@ namespace ResilientFileLock
         /// </summary>
         private async Task ReleaseLock()
         {
-            if (!await IsLockInstanceOwned())
-            {
-                return;
-            }
-
             try
             {
+                if (await LockNotOwnedOrTimedOut())
+                {
+                    return;
+                }
+
                 File.Delete(_path);
             }
             catch (IOException)
             {
+            }
+        }
+
+        private async Task<bool> LockNotOwnedOrTimedOut()
+        {
+            try
+            {
+                return !await IsLockInstanceOwned().TimeoutAfter(DisposeTimeout);
+            }
+            catch (TimeoutException)
+            {
+                return true;
             }
         }
 
