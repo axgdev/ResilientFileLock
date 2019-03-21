@@ -21,7 +21,11 @@ namespace ResilientFileLock.Test
 
         private static string GetTempFileName()
         {
-            if (!Directory.Exists(TempFolderPath)) Directory.CreateDirectory(TempFolderPath);
+            if (!Directory.Exists(TempFolderPath))
+            {
+                Directory.CreateDirectory(TempFolderPath);
+            }
+
             var filePath = Path.Combine(TempFolderPath, Path.GetRandomFileName());
             File.Create(filePath).Close();
             return filePath;

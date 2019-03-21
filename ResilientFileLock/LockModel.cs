@@ -7,14 +7,8 @@ namespace ResilientFileLock
 {
     internal class LockModel
     {
-        private readonly string _path;
         private readonly Guid _identifier;
-
-        private class LockFile
-        {
-            public Guid Identifier = Guid.Empty;
-            public DateTime ReleaseDate = DateTime.MinValue;
-        }
+        private readonly string _path;
 
         internal LockModel(string path)
         {
@@ -33,10 +27,11 @@ namespace ResilientFileLock
                     await sr.WriteLineAsync(date.Ticks.ToString());
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return false;
             }
+
             return true;
         }
 
@@ -67,20 +62,27 @@ namespace ResilientFileLock
         {
             try
             {
-                using (var fs = new FileStream(string.IsNullOrWhiteSpace(path) ? _path : path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var fs = new FileStream(string.IsNullOrWhiteSpace(path) ? _path : path, FileMode.Open,
+                    FileAccess.Read, FileShare.ReadWrite))
                 using (var sr = new StreamReader(fs, Encoding.UTF8))
                 {
                     var identifier = Guid.Parse(await sr.ReadLineAsync());
                     var ticks = long.Parse(await sr.ReadLineAsync());
                     var releaseDate = new DateTime(ticks, DateTimeKind.Utc);
 
-                    return new LockFile { Identifier = identifier, ReleaseDate = releaseDate };
+                    return new LockFile {Identifier = identifier, ReleaseDate = releaseDate};
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return new LockFile();
             }
+        }
+
+        private class LockFile
+        {
+            public Guid Identifier = Guid.Empty;
+            public DateTime ReleaseDate = DateTime.MinValue;
         }
     }
 }

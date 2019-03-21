@@ -13,12 +13,12 @@ namespace ResilientFileLock
     {
         private const string Extension = "lock";
         private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(10);
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly LockModel _content;
         private readonly string _path;
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private TimeSpan _timeout = TimeSpan.MinValue;
-        private TimeSpan _retrySpan = TimeSpan.MinValue;
         private bool _disposed;
+        private TimeSpan _retrySpan = TimeSpan.MinValue;
+        private TimeSpan _timeout = TimeSpan.MinValue;
 
         /// <inheritdoc />
         /// <summary>
@@ -71,7 +71,8 @@ namespace ResilientFileLock
         {
             if (retrySpan >= timeoutSpan)
             {
-                throw new ArgumentException("Retry span cannot be higher or equal than timeout span", nameof(retrySpan));
+                throw new ArgumentException("Retry span cannot be higher or equal than timeout span",
+                    nameof(retrySpan));
             }
 
             _timeout = timeoutSpan;
@@ -121,7 +122,10 @@ namespace ResilientFileLock
             {
                 var isLockAcquired = await TryAcquireWithoutTimeout(lockTime, refreshContinuously, cancellationToken);
                 if (isLockAcquired)
+                {
                     return true;
+                }
+
                 await Task.Delay(_retrySpan, _cancellationTokenSource.Token);
             }
 
@@ -182,7 +186,7 @@ namespace ResilientFileLock
         }
 
         /// <summary>
-        /// IOException is ignored as there is nothing to do if we cannot delete the lock file
+        ///     IOException is ignored as there is nothing to do if we cannot delete the lock file
         /// </summary>
         private async Task ReleaseLock()
         {

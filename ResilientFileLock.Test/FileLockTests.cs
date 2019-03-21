@@ -11,6 +11,27 @@ namespace ResilientFileLock.Test
         private readonly TimeSpan _timeVariable = TimeSpan.FromSeconds(5);
         private const string Extension = "lock";
 
+        private static async Task AfterLockModelArrange(Action<FileLock, string, TimeSpan> actAssert)
+        {
+            await AfterLockModelArrangeAsync((fileLock, lockFilename, lockTime) =>
+            {
+                actAssert(fileLock, lockFilename, lockTime);
+                return Task.CompletedTask;
+            });
+        }
+
+        private static async Task AfterLockModelArrangeAsync(Func<FileLock, string, TimeSpan, Task> actAssert)
+        {
+            using (var testPath = new TestPath())
+            using (var fileLock = new FileLock(testPath.TempFile))
+            {
+                var lockFileName = Path.ChangeExtension(testPath.TempFile.FullName, Extension);
+                var lockTime = TimeSpan.FromHours(1);
+                await fileLock.TryAcquire(lockTime);
+                await actAssert(fileLock, lockFileName, lockTime);
+            }
+        }
+
         [Fact]
         public async Task AcquireSecondLock()
         {
@@ -41,47 +62,6 @@ namespace ResilientFileLock.Test
                     Assert.True(secondLockAcquired);
                 }
             }
-        }
-
-        private static async Task AfterLockModelArrange(Action<FileLock, string, TimeSpan> actAssert)
-        {
-            await AfterLockModelArrangeAsync((fileLock, lockFilename, lockTime) =>
-            {
-                actAssert(fileLock, lockFilename, lockTime);
-                return Task.CompletedTask;
-            });
-        }
-
-        private static async Task AfterLockModelArrangeAsync(Func<FileLock, string, TimeSpan, Task> actAssert)
-        {
-            using (var testPath = new TestPath())
-            using (var fileLock = new FileLock(testPath.TempFile))
-            {
-                var lockFileName = Path.ChangeExtension(testPath.TempFile.FullName, Extension);
-                var lockTime = TimeSpan.FromHours(1);
-                await fileLock.TryAcquire(lockTime);
-                await actAssert(fileLock, lockFileName, lockTime);
-            }
-        }
-
-        [Fact]
-        public async Task LockModelIsCreated()
-        {
-            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
-            {
-                Assert.True(File.Exists(lockFilename));
-            });
-        }
-
-        [Fact]
-        public async Task LockModelIsCorrect()
-        {
-            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
-            {
-                var lockContentLines = File.ReadAllLines(lockFilename);
-                Assert.True(Guid.TryParse(lockContentLines[0], out _));
-                Assert.True(long.TryParse(lockContentLines[1], out var ticks));
-            });
         }
 
         [Fact]
@@ -149,25 +129,15 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async Task Many()
+        public async Task GetTimeReturnsCurrentReleaseDate()
         {
-            const int i = 100;
-            var result = true;
-            for(var j = 0; j < i; j++)
+            using (var testPath = new TestPath())
+            using (var fileLock = new FileLock(testPath.TempFile))
             {
-                using (var testPath = new TestPath())
-                using (var fileLock = new FileLock(testPath.TempFile))
-                {
-                    if (!await fileLock.TryAcquire(TimeSpan.FromHours(1)) &&
-                        !File.Exists(Path.ChangeExtension(testPath.TempFile.FullName, Extension)))
-                    {
-                        result = false;
-                        break;
-                    }
-                }
+                await fileLock.TryAcquire(TimeSpan.FromHours(1));
+                var dateTime = await fileLock.GetReleaseDate();
+                Assert.NotEqual(DateTime.MaxValue, dateTime);
             }
-
-            Assert.True(result);
         }
 
         [Fact]
@@ -182,15 +152,43 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async Task GetTimeReturnsCurrentReleaseDate()
+        public async Task LockModelIsCorrect()
         {
-            using (var testPath = new TestPath())
-            using (var fileLock = new FileLock(testPath.TempFile))
+            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
             {
-                await fileLock.TryAcquire(TimeSpan.FromHours(1));
-                var dateTime = await fileLock.GetReleaseDate();
-                Assert.NotEqual(DateTime.MaxValue, dateTime);
-            }
+                var lockContentLines = File.ReadAllLines(lockFilename);
+                Assert.True(Guid.TryParse(lockContentLines[0], out _));
+                Assert.True(long.TryParse(lockContentLines[1], out var ticks));
+            });
+        }
+
+        [Fact]
+        public async Task LockModelIsCreated()
+        {
+            await AfterLockModelArrange((fileLock, lockFilename, lockTime) =>
+            {
+                Assert.True(File.Exists(lockFilename));
+            });
+        }
+
+        [Fact]
+        public async Task Many()
+        {
+            const int i = 100;
+            var result = true;
+            for (var j = 0; j < i; j++)
+                using (var testPath = new TestPath())
+                using (var fileLock = new FileLock(testPath.TempFile))
+                {
+                    if (!await fileLock.TryAcquire(TimeSpan.FromHours(1)) &&
+                        !File.Exists(Path.ChangeExtension(testPath.TempFile.FullName, Extension)))
+                    {
+                        result = false;
+                        break;
+                    }
+                }
+
+            Assert.True(result);
         }
     }
 }
