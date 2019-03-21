@@ -18,8 +18,6 @@ namespace ResilientFileLock
         /// <returns></returns>
         FileLock WithTimeout(TimeSpan timeoutSpan, TimeSpan retrySpan);
 
-        FileLock WithDisposalTimeout(TimeSpan disposeTimeout);
-
         /// <summary>
         ///     Extend lock by certain amount of time
         /// </summary>

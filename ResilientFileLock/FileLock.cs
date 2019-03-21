@@ -12,20 +12,22 @@ namespace ResilientFileLock
     public class FileLock : ILock
     {
         private const string Extension = "lock";
+        private static readonly TimeSpan DefaultDisposalTimeout = TimeSpan.FromSeconds(30);
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly LockModel _content;
         private readonly string _path;
+        private readonly TimeSpan _disposalTimeout;
         private bool _disposed;
         private TimeSpan _retrySpan = TimeSpan.MinValue;
         private TimeSpan _timeout = TimeSpan.MinValue;
-        private TimeSpan _disposalTimeout = TimeSpan.FromSeconds(30);
 
         /// <inheritdoc />
         /// <summary>
         ///     Creates reference to file lock on target file
         /// </summary>
         /// <param name="fileToLock">File we want lock</param>
-        public FileLock(FileSystemInfo fileToLock) : this(fileToLock.FullName)
+        /// <param name="disposalTimeout">Maximum amount of time allowed to dispose object</param>
+        public FileLock(FileSystemInfo fileToLock, TimeSpan? disposalTimeout = null) : this(fileToLock.FullName, disposalTimeout)
         {
         }
 
@@ -33,7 +35,8 @@ namespace ResilientFileLock
         ///     Creates reference to file lock on target file
         /// </summary>
         /// <param name="path">Path to file we want lock</param>
-        public FileLock(string path)
+        /// <param name="disposalTimeout">Maximum amount of time allowed to dispose object</param>
+        public FileLock(string path, TimeSpan? disposalTimeout = null)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -42,6 +45,7 @@ namespace ResilientFileLock
 
             _path = GetLockFileName(path);
             _content = new LockModel(_path);
+            _disposalTimeout = disposalTimeout ?? DefaultDisposalTimeout;
         }
 
         /// <inheritdoc />
@@ -61,6 +65,7 @@ namespace ResilientFileLock
             NoSynchronizationContextScope.RunSynchronously(ReleaseLock);
         }
 
+        /// <inheritdoc />
         public FileLock WithTimeout(TimeSpan timeoutSpan, TimeSpan retrySpan)
         {
             if (retrySpan >= timeoutSpan)
@@ -71,12 +76,6 @@ namespace ResilientFileLock
 
             _timeout = timeoutSpan;
             _retrySpan = retrySpan;
-            return this;
-        }
-
-        public FileLock WithDisposalTimeout(TimeSpan disposalTimeout)
-        {
-            _disposalTimeout = disposalTimeout;
             return this;
         }
 
