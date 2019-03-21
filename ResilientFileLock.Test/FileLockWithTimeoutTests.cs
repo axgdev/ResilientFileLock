@@ -14,7 +14,7 @@ namespace ResilientFileLock.Test
         [InlineData(3)]
         [InlineData(4)]
         [InlineData(5)]
-        public async void TryToAcquireLockBeforeItIsReleased(int lockSeconds)
+        public async Task TryToAcquireLockBeforeItIsReleased(int lockSeconds)
         {
             var lockSpan = TimeSpan.FromSeconds(lockSeconds);
             using (var testPath = new TestPath())
@@ -39,7 +39,7 @@ namespace ResilientFileLock.Test
         [InlineData(70)]
         [InlineData(100)]
         [InlineData(150)]
-        public async void TryToAcquireLockAfterItIsReleased(int lockMilliseconds)
+        public async Task TryToAcquireLockAfterItIsReleased(int lockMilliseconds)
         {
             var lockSpan = TimeSpan.FromMilliseconds(lockMilliseconds);
             var timeout = TimeSpan.FromMilliseconds(lockMilliseconds * 10);
@@ -63,7 +63,7 @@ namespace ResilientFileLock.Test
         [InlineData(30)]
         [InlineData(40)]
         [InlineData(50)]
-        public async void TryToAcquireLockBeforeOfficialRelease(int delayMilliseconds)
+        public async Task TryToAcquireLockBeforeOfficialRelease(int delayMilliseconds)
         {
             var spanToRelease = TimeSpan.FromMilliseconds(delayMilliseconds);
             var lockSpan = TimeSpan.FromMilliseconds(delayMilliseconds * 2);
@@ -90,7 +90,7 @@ namespace ResilientFileLock.Test
         [InlineData(3)]
         [InlineData(4)]
         [InlineData(5)]
-        public async void LockShouldNotWaitTillTimeoutToBeAcquiredIfNotLocked(int lockSeconds)
+        public async Task LockShouldNotWaitTillTimeoutToBeAcquiredIfNotLocked(int lockSeconds)
         {
             var lockSpan = TimeSpan.FromSeconds(lockSeconds);
             var retrySpan = TimeSpan.FromSeconds(lockSeconds / 2.0);

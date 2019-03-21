@@ -12,7 +12,7 @@ namespace ResilientFileLock.Test
         private const string Extension = "lock";
 
         [Fact]
-        public async void AcquireSecondLock()
+        public async Task AcquireSecondLock()
         {
             using (var testPath = new TestPath())
             using (var fileLock1 = new FileLock(testPath.TempFile))
@@ -26,7 +26,7 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async void AcquireSecondLockAfterRelease()
+        public async Task AcquireSecondLockAfterRelease()
         {
             using (var testPath = new TestPath())
             {
@@ -44,7 +44,7 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async void BasicLock()
+        public async Task BasicLock()
         {
             using (var testPath = new TestPath())
             using(var fileLock = new FileLock(testPath.TempFile))
@@ -64,7 +64,7 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async void DisposeTest()
+        public async Task DisposeTest()
         {
             using (var testPath = new TestPath())
             {
@@ -102,7 +102,7 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async void Many()
+        public async Task Many()
         {
             const int i = 100;
             var result = true;
@@ -124,7 +124,7 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async void GetTimeReturnsMinValueWithNoLock()
+        public async Task GetTimeReturnsMinValueWithNoLock()
         {
             using (var testPath = new TestPath())
             using (var fileLock = new FileLock(testPath.TempFile))
@@ -135,7 +135,7 @@ namespace ResilientFileLock.Test
         }
 
         [Fact]
-        public async void GetTimeReturnsCurrentReleaseDate()
+        public async Task GetTimeReturnsCurrentReleaseDate()
         {
             using (var testPath = new TestPath())
             using (var fileLock = new FileLock(testPath.TempFile))
