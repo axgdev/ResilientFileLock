@@ -1,10 +1,10 @@
 # Xabe.FileLock.WithTimeout
 
-.NET Standard library providing exclusive lock on file. Additional functionality to acquire this lock with a timeout. Based on: [Xabe.Filelock](https://github.com/tomaszzmuda/Xabe.FileLock)
+.NET Standard library providing exclusive lock on file. Additional functionality to acquire this lock with a timeout. Based on: [Xabe.Filelock](https://github.com/tomaszzmuda/Xabe.FileLock). Highly recommended to check out that library first, this library adds timeout possibilities as well as some additional mechanism to ensure it works for different processes in different computers.
 
-## Using ##
+## Using
 
-Install the [ResilientFileLock NuGet package](https://www.nuget.org/packages/ResilientFileLock "") via nuget:
+Install the [ResilientFileLock NuGet package](https://www.nuget.org/packages/ResilientFileLock) via nuget:
 
 	PM> Install-Package ResilientFileLock
 	
@@ -20,7 +20,7 @@ Last two parameters are optional, the second last defines if lock should be auto
 
 If file already has lock file, and it time has not expired, method returns false.
 
-## Recommended using ##
+## Recommended using
 
 ```csharp
 using (fileLock = new FileLock(file))
@@ -53,7 +53,7 @@ using (fileLock = new FileLock(file))
         // things to do if timeout happens
     }
 }
-```	
-## License ## 
+```
+## License
 
 ResilientFileLock is licensed under MIT - see [License](LICENSE.md) for details.
