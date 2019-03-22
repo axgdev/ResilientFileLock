@@ -1,4 +1,4 @@
-# Xabe.FileLock.WithTimeout
+# ResilientFileLock
 
 .NET Standard library providing exclusive lock on file. Additional functionality to acquire this lock with a timeout. Based on: [Xabe.Filelock](https://github.com/tomaszzmuda/Xabe.FileLock). Highly recommended to check out that library first, this library adds timeout possibilities as well as some additional mechanism to ensure it works for different processes in different computers.
 
