@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
+    <TargetFrameworks>netstandard1.3;netstandard2.0;net45</TargetFrameworks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Authors>Axel Garcia</Authors>
     <Company />
@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/axgdev/ResilientFileLock/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/axgdev/ResilientFileLock/</RepositoryUrl>
     <PackageTags>file lock filelock file-lock locking files concurrency core timeout</PackageTags>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
 </Project>
