@@ -5,7 +5,13 @@ VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientFileLock", "ResilientFileLock\ResilientFileLock.csproj", "{38F532A3-1E24-4A11-A2AF-1C1128F1FCCF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResilientFileLock.Test", "ResilientFileLock.Test\ResilientFileLock.Test.csproj", "{3F26C1CC-43A3-4947-9BC2-1DCA9349FFFA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientFileLock.Test", "ResilientFileLock.Test\ResilientFileLock.Test.csproj", "{3F26C1CC-43A3-4947-9BC2-1DCA9349FFFA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FE05FB63-F88C-4A5E-B761-CB4A98CCB976}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

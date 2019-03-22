@@ -3,6 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.3</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>Axel Garcia</Authors>
+    <Company />
+    <Description>Cross-platform library providing exclusive lock on file, with timeout functionality. Based on: https://xabe.net/product/xabe_filelock/</Description>
+    <Copyright>Copyright 2019 (c) Axel Garcia</Copyright>
+    <PackageLicenseUrl>https://github.com/axgdev/ResilientFileLock/blob/master/LICENSE.md</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/axgdev/ResilientFileLock/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/axgdev/ResilientFileLock/</RepositoryUrl>
+    <PackageTags>file lock filelock file-lock locking files concurrency core timeout</PackageTags>
   </PropertyGroup>
 
 </Project>
